@@ -713,6 +713,23 @@
 				<xs:anyAttribute processContents="lax"/>
 			</xs:complexType>
 			<!--===============================-->
+			<xs:complexType name="PasswordHistoryConfigurations">
+				<xs:sequence>
+					<xs:element name="Enabled" type="xs:boolean">
+						<xs:annotation>
+							<xs:documentation>Indicates if the password history is enabled.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Length" type="xs:positiveInteger" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>Minimum number of uppercase characters that must be present in a user password.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:any minOccurs="0" maxOccurs="unbounded" namespace="##any" processContents="lax"/>   <!-- first ONVIF then Vendor -->
+				</xs:sequence>
+				<xs:anyAttribute processContents="lax"/>
+			</xs:complexType>
+			<!--===============================-->
 			<xs:complexType name="KeystoreCapabilities">
 				<xs:annotation>
 					<xs:documentation>The capabilities of a keystore implementation on a device.</xs:documentation>
@@ -881,6 +898,11 @@
 				<xs:attribute name="PasswordComplexity" type="xs:boolean">
 					<xs:annotation>
 						<xs:documentation>Indicates if the device supports the configuration of a password complexity policy.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="MaxPasswordHistoryLen" type="xs:nonNegativeInteger">
+					<xs:annotation>
+						<xs:documentation>Indicates the maximum number of passwords that the device is able to remember.</xs:documentation>
 					</xs:annotation>
 				</xs:attribute>
 				<xs:anyAttribute processContents="lax"/>
@@ -2139,6 +2161,44 @@
 					</xs:sequence>
 				</xs:complexType>
 			</xs:element>
+			<!--===============================================-->
+			<xs:element name="SetPasswordHistoryPolicy">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="PasswordHistory" type="tas:PasswordHistoryConfigurations">
+							<xs:annotation>
+								<xs:documentation>The new password history policy.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<!--===============================-->
+			<xs:element name="SetPasswordHistoryPolicyResponse">
+				<xs:complexType>
+					<xs:sequence>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<!--===============================================-->
+			<xs:element name="GetPasswordHistoryPolicy">
+				<xs:complexType>
+					<xs:sequence>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<!--===============================-->
+			<xs:element name="GetPasswordHistoryPolicyResponse">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="PasswordHistory" type="tas:PasswordHistoryConfigurations">
+							<xs:annotation>
+								<xs:documentation>The configured password history policy.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
 		</xs:schema>
 	</wsdl:types>
 	<wsdl:message name="GetServiceCapabilitiesRequest">
@@ -2452,6 +2512,18 @@
 	</wsdl:message>
 	<wsdl:message name="GetPasswordComplexityPolicyResponse">
 		<wsdl:part name="parameters" element="tas:GetPasswordComplexityPolicyResponse"/>
+	</wsdl:message>
+	<wsdl:message name="SetPasswordHistoryPolicyRequest">
+		<wsdl:part name="parameters" element="tas:SetPasswordHistoryPolicy"/>
+	</wsdl:message>
+	<wsdl:message name="SetPasswordHistoryPolicyResponse">
+		<wsdl:part name="parameters" element="tas:SetPasswordHistoryPolicyResponse"/>
+	</wsdl:message>
+	<wsdl:message name="GetPasswordHistoryPolicyRequest">
+		<wsdl:part name="parameters" element="tas:GetPasswordHistoryPolicy"/>
+	</wsdl:message>
+	<wsdl:message name="GetPasswordHistoryPolicyResponse">
+		<wsdl:part name="parameters" element="tas:GetPasswordHistoryPolicyResponse"/>
 	</wsdl:message>
 	<wsdl:portType name="AdvancedSecurityService">
 		<wsdl:documentation>Common functionality for all security configuraiton service parts.</wsdl:documentation>
@@ -3026,6 +3098,21 @@
 			<wsdl:input message="tas:GetPasswordComplexityPolicyRequest"/>
 			<wsdl:output message="tas:GetPasswordComplexityPolicyResponse"/>
 		</wsdl:operation>
+		<wsdl:operation name="SetPasswordHistoryPolicy">
+			<wsdl:documentation>
+				This operation sets the new password history policy on the device.
+				If the provided policy is not valid the device shall produce a PasswordHistory fault and shall discard the provided password history policy.
+			</wsdl:documentation>
+			<wsdl:input message="tas:SetPasswordHistoryPolicyRequest"/>
+			<wsdl:output message="tas:SetPasswordHistoryPolicyResponse"/>
+		</wsdl:operation>
+		<wsdl:operation name="GetPasswordHistoryPolicy">
+			<wsdl:documentation>
+				This operation returns the configured password complexity policy on the device.
+			</wsdl:documentation>
+			<wsdl:input message="tas:GetPasswordHistoryPolicyRequest"/>
+			<wsdl:output message="tas:GetPasswordHistoryPolicyResponse"/>
+		</wsdl:operation>
 	</wsdl:portType>
 	<wsdl:binding name="AdvancedSecurityServiceBinding" type="tas:AdvancedSecurityService">
 		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
@@ -3514,6 +3601,24 @@
 		</wsdl:operation>
 		<wsdl:operation name="GetPasswordComplexityPolicy">
 			<soap:operation soapAction="http://www.onvif.org/ver10/advancedsecurity/wsdl/GetPasswordComplexityPolicy"/>
+			<wsdl:input>
+				<soap:body use="literal"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal"/>
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="SetPasswordHistoryPolicy">
+			<soap:operation soapAction="http://www.onvif.org/ver10/advancedsecurity/wsdl/SetPasswordHistoryPolicy"/>
+			<wsdl:input>
+				<soap:body use="literal"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal"/>
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="GetPasswordHistoryPolicy">
+			<soap:operation soapAction="http://www.onvif.org/ver10/advancedsecurity/wsdl/GetPasswordHistoryPolicy"/>
 			<wsdl:input>
 				<soap:body use="literal"/>
 			</wsdl:input>
