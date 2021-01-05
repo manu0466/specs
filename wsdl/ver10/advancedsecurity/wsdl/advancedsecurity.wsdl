@@ -730,6 +730,36 @@
 				<xs:anyAttribute processContents="lax"/>
 			</xs:complexType>
 			<!--===============================-->
+			<xs:complexType name="FailedAuthWarningConfigurations">
+				<xs:sequence>
+					<xs:element name="Enabled" type="xs:boolean">
+						<xs:annotation>
+							<xs:documentation>
+								Indicates if the device will monitor the failed authentication.
+							</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="MonitorPeriod" type="xs:positiveInteger" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>
+								The amount of seconds that will be monitored after the first failed authentication.
+							</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="AllowedFail" type="xs:positiveInteger" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>
+								The amount of allowed fails within the monitor period.
+								If are detected more then "AllowedFail" failed authentication the device shall generate
+								the tns1:Advancedsecurity/SecurityPolicy/AuthFailed event.
+							</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:any minOccurs="0" maxOccurs="unbounded" namespace="##any" processContents="lax"/>   <!-- first ONVIF then Vendor -->
+				</xs:sequence>
+				<xs:anyAttribute processContents="lax"/>
+			</xs:complexType>
+			<!--===============================-->
 			<xs:complexType name="KeystoreCapabilities">
 				<xs:annotation>
 					<xs:documentation>The capabilities of a keystore implementation on a device.</xs:documentation>
@@ -888,11 +918,38 @@
 				<xs:anyAttribute processContents="lax"/>
 			</xs:complexType>
 			<!--===============================-->
+			<xs:complexType name="AuthFailedWarningCapabilities">
+				<xs:annotation>
+					<xs:documentation>Indicates the ranges of the values that can be configured by SetFailAuthWarning.</xs:documentation>
+				</xs:annotation>
+				<xs:attribute name="MonitorPeriodMin" type="xs:positiveInteger">
+					<xs:annotation>
+						<xs:documentation>Minimum length in second of the monitor period.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="MonitorPeriodMax" type="xs:positiveInteger">
+					<xs:annotation>
+						<xs:documentation>Maximum length in second of the monitor period.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="AllowedFailMin" type="xs:positiveInteger">
+					<xs:annotation>
+						<xs:documentation>Minimum number of allowed authentication failed that can be set.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="AllowedFailMax" type="xs:positiveInteger">
+					<xs:annotation>
+						<xs:documentation>Maximum number of allowed authentication failed that can be set.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:complexType>
+			<!--===============================-->
 			<xs:complexType name="SecurityPolicyCapabilities">
 				<xs:annotation>
 					<xs:documentation>The capabilities of a security policy implementation on a device.</xs:documentation>
 				</xs:annotation>
 				<xs:sequence>
+					<xs:element name="AuthFailedWarningCapabilities" type="tas:AuthFailedWarningCapabilities" minOccurs="0"/>
 					<xs:any namespace="##any" minOccurs="0" maxOccurs="unbounded" processContents="lax"/>   <!-- first ONVIF then Vendor -->
 				</xs:sequence>
 				<xs:attribute name="PasswordComplexity" type="xs:boolean">
@@ -2199,6 +2256,48 @@
 					</xs:sequence>
 				</xs:complexType>
 			</xs:element>
+			<!--===============================================-->
+			<xs:element name="SetFailedAuthWarning">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="FailedAuthWarning" type="tas:FailedAuthWarningConfigurations">
+							<xs:annotation>
+								<xs:documentation>
+									The new auth warning configuration to be set.
+								</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<!--===============================-->
+			<xs:element name="SetFailedAuthWarningResponse">
+				<xs:complexType>
+					<xs:sequence>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<!--===============================================-->
+			<xs:element name="GetFailedAuthWarning">
+				<xs:complexType>
+					<xs:sequence>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<!--===============================-->
+			<xs:element name="GetFailedAuthWarningResponse">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="FailedAuthWarning" type="tas:FailedAuthWarningConfigurations">
+							<xs:annotation>
+								<xs:documentation>
+									Returns the current auth warnings configurations present into the device.
+								</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
 		</xs:schema>
 	</wsdl:types>
 	<wsdl:message name="GetServiceCapabilitiesRequest">
@@ -2524,6 +2623,18 @@
 	</wsdl:message>
 	<wsdl:message name="GetPasswordHistoryPolicyResponse">
 		<wsdl:part name="parameters" element="tas:GetPasswordHistoryPolicyResponse"/>
+	</wsdl:message>
+	<wsdl:message name="SetFailedAuthWarningRequest">
+		<wsdl:part name="parameters" element="tas:SetFailedAuthWarning"/>
+	</wsdl:message>
+	<wsdl:message name="SetFailedAuthWarningResponse">
+		<wsdl:part name="parameters" element="tas:SetFailedAuthWarningResponse"/>
+	</wsdl:message>
+	<wsdl:message name="GetFailedAuthWarningRequest">
+		<wsdl:part name="parameters" element="tas:GetFailedAuthWarning"/>
+	</wsdl:message>
+	<wsdl:message name="GetFailedAuthWarningResponse">
+		<wsdl:part name="parameters" element="tas:GetFailedAuthWarningResponse"/>
 	</wsdl:message>
 	<wsdl:portType name="AdvancedSecurityService">
 		<wsdl:documentation>Common functionality for all security configuraiton service parts.</wsdl:documentation>
@@ -3113,6 +3224,21 @@
 			<wsdl:input message="tas:GetPasswordHistoryPolicyRequest"/>
 			<wsdl:output message="tas:GetPasswordHistoryPolicyResponse"/>
 		</wsdl:operation>
+		<wsdl:operation name="SetFailedAuthWarning">
+			<wsdl:documentation>
+				This operation sets the authentication failed warning configuration into the device.
+				If the provided configuration is not valid the device shall produce a FailedAuthWarning fault and shall discard the provided configuration.
+			</wsdl:documentation>
+			<wsdl:input message="tas:SetFailedAuthWarningRequest"/>
+			<wsdl:output message="tas:SetFailedAuthWarningResponse"/>
+		</wsdl:operation>
+		<wsdl:operation name="GetFailedAuthWarning">
+			<wsdl:documentation>
+				This operation returns the failed warning configuration present into the device.
+			</wsdl:documentation>
+			<wsdl:input message="tas:GetFailedAuthWarningRequest"/>
+			<wsdl:output message="tas:GetFailedAuthWarningResponse"/>
+		</wsdl:operation>
 	</wsdl:portType>
 	<wsdl:binding name="AdvancedSecurityServiceBinding" type="tas:AdvancedSecurityService">
 		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
@@ -3619,6 +3745,24 @@
 		</wsdl:operation>
 		<wsdl:operation name="GetPasswordHistoryPolicy">
 			<soap:operation soapAction="http://www.onvif.org/ver10/advancedsecurity/wsdl/GetPasswordHistoryPolicy"/>
+			<wsdl:input>
+				<soap:body use="literal"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal"/>
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="SetFailedAuthWarning">
+			<soap:operation soapAction="http://www.onvif.org/ver10/advancedsecurity/wsdl/SetFailedAuthWarning"/>
+			<wsdl:input>
+				<soap:body use="literal"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal"/>
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="GetFailedAuthWarning">
+			<soap:operation soapAction="http://www.onvif.org/ver10/advancedsecurity/wsdl/GetFailedAuthWarning"/>
 			<wsdl:input>
 				<soap:body use="literal"/>
 			</wsdl:input>
