@@ -681,6 +681,38 @@
 				<xs:list itemType="xs:string"/>
 			</xs:simpleType>
 			<!--===============================-->
+			<xs:complexType name="PasswordComplexityConfigurations">
+				<xs:sequence>
+					<xs:element name="MinLen" type="xs:positiveInteger">
+						<xs:annotation>
+							<xs:documentation>Minimum length of a user password.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Uppercase" type="xs:nonNegativeInteger">
+						<xs:annotation>
+							<xs:documentation>Minimum number of uppercase characters that must be present in a user password.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Number" type="xs:nonNegativeInteger">
+						<xs:annotation>
+							<xs:documentation>Minimum number of numeric characters that must be present in a user password.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="SpecialChars" type="xs:nonNegativeInteger">
+						<xs:annotation>
+							<xs:documentation>Minimum number of special characters that must be present in a user password.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="BlockUsernameOccurrence" type="xs:boolean">
+						<xs:annotation>
+							<xs:documentation>Blocks the presence of the username inside the password.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:any minOccurs="0" maxOccurs="unbounded" namespace="##any" processContents="lax"/>   <!-- first ONVIF then Vendor -->
+				</xs:sequence>
+				<xs:anyAttribute processContents="lax"/>
+			</xs:complexType>
+			<!--===============================-->
 			<xs:complexType name="KeystoreCapabilities">
 				<xs:annotation>
 					<xs:documentation>The capabilities of a keystore implementation on a device.</xs:documentation>
@@ -839,6 +871,21 @@
 				<xs:anyAttribute processContents="lax"/>
 			</xs:complexType>
 			<!--===============================-->
+			<xs:complexType name="SecurityPolicyCapabilities">
+				<xs:annotation>
+					<xs:documentation>The capabilities of a security policy implementation on a device.</xs:documentation>
+				</xs:annotation>
+				<xs:sequence>
+					<xs:any namespace="##any" minOccurs="0" maxOccurs="unbounded" processContents="lax"/>   <!-- first ONVIF then Vendor -->
+				</xs:sequence>
+				<xs:attribute name="PasswordComplexity" type="xs:boolean">
+					<xs:annotation>
+						<xs:documentation>Indicates if the device supports the configuration of a password complexity policy.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:anyAttribute processContents="lax"/>
+			</xs:complexType>
+			<!--===============================-->
 			<xs:complexType name="Capabilities">
 				<xs:annotation>
 					<xs:documentation>The capabilities of a Security Configuration Service implementation on a device.</xs:documentation>
@@ -857,6 +904,11 @@
 					<xs:element name="Dot1XCapabilities" type="tas:Dot1XCapabilities" minOccurs="0">
 						<xs:annotation>
 							<xs:documentation>The capabilities of the 802.1X implementation.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="SecurityPoliciesCapabilities" type="tas:SecurityPolicyCapabilities" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>The capabilities of the security policies implementation.</xs:documentation>
 						</xs:annotation>
 					</xs:element>
 					<xs:any minOccurs="0" maxOccurs="unbounded" namespace="##any" processContents="lax"/>   <!-- first ONVIF then Vendor -->
@@ -2049,6 +2101,44 @@
 					</xs:sequence>
 				</xs:complexType>
 			</xs:element>
+			<!--===============================================-->
+			<xs:element name="SetPasswordComplexityPolicy">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="PasswordComplexity" type="tas:PasswordComplexityConfigurations">
+							<xs:annotation>
+								<xs:documentation>The new password complexity policy.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<!--===============================-->
+			<xs:element name="SetPasswordComplexityPolicyResponse">
+				<xs:complexType>
+					<xs:sequence>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<!--===============================================-->
+			<xs:element name="GetPasswordComplexityPolicy">
+				<xs:complexType>
+					<xs:sequence>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<!--===============================-->
+			<xs:element name="GetPasswordComplexityPolicyResponse">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="PasswordComplexity" type="tas:PasswordComplexityConfigurations">
+							<xs:annotation>
+								<xs:documentation>The configured password complexity policy.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
 		</xs:schema>
 	</wsdl:types>
 	<wsdl:message name="GetServiceCapabilitiesRequest">
@@ -2350,6 +2440,18 @@
 	</wsdl:message>
 	<wsdl:message name="DeleteNetworkInterfaceDot1XConfigurationResponse">
 		<wsdl:part name="parameters" element="tas:DeleteNetworkInterfaceDot1XConfigurationResponse"/>
+	</wsdl:message>
+	<wsdl:message name="SetPasswordComplexityPolicyRequest">
+		<wsdl:part name="parameters" element="tas:SetPasswordComplexityPolicy"/>
+	</wsdl:message>
+	<wsdl:message name="SetPasswordComplexityPolicyResponse">
+		<wsdl:part name="parameters" element="tas:SetPasswordComplexityPolicyResponse"/>
+	</wsdl:message>
+	<wsdl:message name="GetPasswordComplexityPolicyRequest">
+		<wsdl:part name="parameters" element="tas:GetPasswordComplexityPolicy"/>
+	</wsdl:message>
+	<wsdl:message name="GetPasswordComplexityPolicyResponse">
+		<wsdl:part name="parameters" element="tas:GetPasswordComplexityPolicyResponse"/>
 	</wsdl:message>
 	<wsdl:portType name="AdvancedSecurityService">
 		<wsdl:documentation>Common functionality for all security configuraiton service parts.</wsdl:documentation>
@@ -2907,6 +3009,24 @@
 			<wsdl:output message="tas:DeleteNetworkInterfaceDot1XConfigurationResponse"/>
 		</wsdl:operation>
 	</wsdl:portType>
+	<wsdl:portType name="SecurityPolicies">
+		<wsdl:documentation>Security policies configurations.</wsdl:documentation>
+		<wsdl:operation name="SetPasswordComplexityPolicy">
+			<wsdl:documentation>
+				This operation sets the new password complexity policy on the device.
+				If the provided policy is not valid the device shall produce a PasswordComplexity fault and shall discard the provided password complexity policy.
+			</wsdl:documentation>
+			<wsdl:input message="tas:SetPasswordComplexityPolicyRequest"/>
+			<wsdl:output message="tas:SetPasswordComplexityPolicyResponse"/>
+		</wsdl:operation>
+		<wsdl:operation name="GetPasswordComplexityPolicy">
+			<wsdl:documentation>
+				This operation returns the  configured password complexity policy on the device.
+			</wsdl:documentation>
+			<wsdl:input message="tas:GetPasswordComplexityPolicyRequest"/>
+			<wsdl:output message="tas:GetPasswordComplexityPolicyResponse"/>
+		</wsdl:operation>
+	</wsdl:portType>
 	<wsdl:binding name="AdvancedSecurityServiceBinding" type="tas:AdvancedSecurityService">
 		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
 		<wsdl:operation name="GetServiceCapabilities">
@@ -3373,6 +3493,27 @@
 		</wsdl:operation>
 		<wsdl:operation name="DeleteNetworkInterfaceDot1XConfiguration">
 			<soap:operation soapAction="http://www.onvif.org/ver10/advancedsecurity/wsdl/DeleteNetworkInterfaceDot1XConfiguration"/>
+			<wsdl:input>
+				<soap:body use="literal"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal"/>
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+	<wsdl:binding name="SecurityPoliciesBinding" type="tas:SecurityPolicies">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<wsdl:operation name="SetPasswordComplexityPolicy">
+			<soap:operation soapAction="http://www.onvif.org/ver10/advancedsecurity/wsdl/SetPasswordComplexityPolicy"/>
+			<wsdl:input>
+				<soap:body use="literal"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal"/>
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="GetPasswordComplexityPolicy">
+			<soap:operation soapAction="http://www.onvif.org/ver10/advancedsecurity/wsdl/GetPasswordComplexityPolicy"/>
 			<wsdl:input>
 				<soap:body use="literal"/>
 			</wsdl:input>
